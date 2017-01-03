@@ -1,0 +1,98 @@
+CSE 506 - Operating Systems Assignment 3
+Author  : Meng-Chieh Yang
+ID      : 110452591
+Date    : 12/01/16
+
+
+* File:
+/hw3/.
+contains system call management module and loadable system call vectors.
+- svctl.h    : define IOCTL device number, MACRO, and structs for conversation between module and user application.
+- sv_manage.h: define struct sv_metadata for storing system call vectors information.
+- sv_manage.c: modules for maintaining list of system call vectors, counting reference of specific vectors.
+- vector_1.c : self-defined system vector for read and write only.
+- vector_2.c : self-defined system vector for not allowing delete files and directories.
+- install.sh : easier version to install module and vectors.
+- remove.sh  : easier version to remove module and vectors
+
+/hw3/test_code/.
+contains user space test code
+- svctl.c    : ioctl(2) support for sv_manage module, including list, set, and get current system vector.
+- test1.c    : code for testing ioctl and vector_1.
+- test2.c    : code for testing new clone(2) flag CLONE_SYSCALLS and vector_2.
+- input.txt  : input file with some texts for function testing.
+
+/hw3/modified/.
+contains modified files of kernel
+- /include/linux/sched.h:  add new field sv_ptr of task_struct, defined CLONE_SYSCALLS(0x00001000).
+- /include/linux/init_task.h:  initialize sv_ptr value for default sys_call_table.
+- /arch/x86/entry/syscall_64.c:  export sys_call_table for modules.
+- /arch/x86/entry/common.c:  new function do_my_syscall() for using custom tables
+- /arch/x86/entry/entry_64.S:  modify entry_SYSCALL_64_fastpath for do_my_syscall().
+- /kernel/exit.c:  modify do_exit() and exported a hook for reference counting.
+- /kernel/fork.c:  modify copy_process() to support CLONE_SYSCALLS, exported a hook for reference counting and modified 
+				   dup_task_struct() for sv_ptr.
+- /include/linux/syscalls.h:  modify for sys_clone2.
+- /arch/x86/entry/syscalls/syscall_64.tbl:  modify for sys_clone2.
+- /fs/open.c:  modify for sys_clone2.
+
+
+* Usage:
+1.  To make life easier, one can use the following command under /hw3/.
+	
+		sh install.h
+
+	to install modules(including system call vectors management modules and two self-defined vectors).  And use
+
+		sh remove.h
+
+	to unload these modules.  Or you can use treditional way to make(clean) and insmod/rmmod these modules.
+
+
+2. For ioctl(2) support and testing, go to /hw3/test_code/ directory and run make command for executable files.
+
+
+3. Use test_1 for testing ioctl support(will describe it later) and vector_1.  To be specific, vector_1 is a read-write only vector, so 
+   one can only use open, read, write functions for file management.  The others, which including rmdir, mkdir, chdir, rename, create, unlink, have been forbidden.
+
+
+4. Use test_2 for testing CLONE_SYSCALLS support(which will inherit system vector from parent process rather than default one) and 
+   vector_2.  Vector_2 is a delete-forbidden vectors, which not allowing rmdir and unlink functions to be executed.
+
+
+* IOCTL:
+This module simply provide three kind ioctl:  LIST, CURRENT, SET.  To use it, run
+
+		./svctl [-l] [-c <PID>] [-s <PID> <SYSCALL_VECTOR_ID>]
+
+-l: list currently active vectors of system calls.
+-c: examine current system vector by a given PID.
+-s: set the given process by PID to designed system call vector by its ID, won't do anything if design to currently used one.
+
+
+* Design:
+Have different system calls tables per process is useful, but it's hard for a loadable kernel modules to change default system calls table.  To achieve that, I have made several changes as follow:
+
+1. First of all, export the default sys_call_table so that a module can refer to this table.
+
+2. Because every process has a unique task_struct, I add a new field sv_ptr to this structure; this sv_ptr points to its system call vector and init to default sys_call_table in init_task.h.
+
+3. Then, for using customized system call vectors, I add a new function do_my_call() in common.c and some corresponding files to execute the functions in the table that sv_ptr points to.
+
+4. Also, to make this sv_ptr works, I modified function in fork.c, especially copy_process() and dup_task_struct() so that when a process forks, it can copy such sv_ptr to its child, and also decide if child want to inherit such system call vector based on CLONE_SYSCALLS flag.
+
+5. Export pointer for function of referenece counting to hook in fork.c and exit.c files, so that such counting can works properly when forking or exiting.
+
+
+Then, I design a module for system call vectors management.  Basically it maintains a list for registering system call vectors and contains functions for referenece counting and ioctl support.  We hook our function to the exported pointer described above so that it can works fine in fork.c and exit.c.
+
+
+For self-defined vector, I also design it as loadable kernel module, so that it can easily register to my vectors management modules or remove from it while unload.  While I want a new system call function, I just need to create a customized function in vector module and replace original one with this function, so when system want to use the old system call, it will get new function instead.  Similarily, if I want to forbit some function, I just need to assign NULL to it position.
+
+
+
+
+
+
+
+
