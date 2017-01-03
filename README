@@ -1,11 +1,9 @@
-CSE 506 - Operating Systems Assignment 3
 Author  : Meng-Chieh Yang
-ID      : 110452591
 Date    : 12/01/16
 
 
 * File:
-/hw3/.
+/.
 contains system call management module and loadable system call vectors.
 - svctl.h    : define IOCTL device number, MACRO, and structs for conversation between module and user application.
 - sv_manage.h: define struct sv_metadata for storing system call vectors information.
@@ -15,14 +13,14 @@ contains system call management module and loadable system call vectors.
 - install.sh : easier version to install module and vectors.
 - remove.sh  : easier version to remove module and vectors
 
-/hw3/test_code/.
+/test_code/.
 contains user space test code
 - svctl.c    : ioctl(2) support for sv_manage module, including list, set, and get current system vector.
 - test1.c    : code for testing ioctl and vector_1.
 - test2.c    : code for testing new clone(2) flag CLONE_SYSCALLS and vector_2.
 - input.txt  : input file with some texts for function testing.
 
-/hw3/modified/.
+/modified/.
 contains modified files of kernel
 - /include/linux/sched.h:  add new field sv_ptr of task_struct, defined CLONE_SYSCALLS(0x00001000).
 - /include/linux/init_task.h:  initialize sv_ptr value for default sys_call_table.
@@ -38,26 +36,24 @@ contains modified files of kernel
 
 
 * Usage:
-1.  To make life easier, one can use the following command under /hw3/.
+1.  To make life easier, one can use the following command under /.
 	
 		sh install.h
 
-	to install modules(including system call vectors management modules and two self-defined vectors).  And use
+to install modules(including system call vectors management modules and two self-defined vectors).  And use
 
 		sh remove.h
 
-	to unload these modules.  Or you can use treditional way to make(clean) and insmod/rmmod these modules.
+to unload these modules.  Or you can use treditional way to make(clean) and insmod/rmmod these modules.
 
 
-2. For ioctl(2) support and testing, go to /hw3/test_code/ directory and run make command for executable files.
+2. For ioctl(2) support and testing, go to /test_code/ directory and run make command for executable files.
 
 
-3. Use test_1 for testing ioctl support(will describe it later) and vector_1.  To be specific, vector_1 is a read-write only vector, so 
-   one can only use open, read, write functions for file management.  The others, which including rmdir, mkdir, chdir, rename, create, unlink, have been forbidden.
+3. Use test_1 for testing ioctl support(will describe it later) and vector_1.  To be specific, vector_1 is a read-write only vector, so one can only use open, read, write functions for file management.  The others, which including rmdir, mkdir, chdir, rename, create, unlink, have been forbidden.
 
 
-4. Use test_2 for testing CLONE_SYSCALLS support(which will inherit system vector from parent process rather than default one) and 
-   vector_2.  Vector_2 is a delete-forbidden vectors, which not allowing rmdir and unlink functions to be executed.
+4. Use test_2 for testing CLONE_SYSCALLS support(which will inherit system vector from parent process rather than default one) and vector_2.  vector_2 is a delete-forbidden vectors, which not allowing rmdir and unlink functions to be executed.
 
 
 * IOCTL:
@@ -88,11 +84,3 @@ Then, I design a module for system call vectors management.  Basically it mainta
 
 
 For self-defined vector, I also design it as loadable kernel module, so that it can easily register to my vectors management modules or remove from it while unload.  While I want a new system call function, I just need to create a customized function in vector module and replace original one with this function, so when system want to use the old system call, it will get new function instead.  Similarily, if I want to forbit some function, I just need to assign NULL to it position.
-
-
-
-
-
-
-
-
