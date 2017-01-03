@@ -27,9 +27,8 @@ contains modified files of kernel
 - /arch/x86/entry/syscall_64.c:  export sys_call_table for modules.
 - /arch/x86/entry/common.c:  new function do_my_syscall() for using custom tables
 - /arch/x86/entry/entry_64.S:  modify entry_SYSCALL_64_fastpath for do_my_syscall().
-- /kernel/exit.c:  modify do_exit() and exported a hook for reference counting.
-- /kernel/fork.c:  modify copy_process() to support CLONE_SYSCALLS, exported a hook for reference counting and modified 
-				   dup_task_struct() for sv_ptr.
+- /kernel/exit.c:  modify do_exit() and export a hook for reference counting.
+- /kernel/fork.c:  modify copy_process() to support CLONE_SYSCALLS, dup_task_struct() for sv_ptr, export a hook for reference counting.
 - /include/linux/syscalls.h:  modify for sys_clone2.
 - /arch/x86/entry/syscalls/syscall_64.tbl:  modify for sys_clone2.
 - /fs/open.c:  modify for sys_clone2.
@@ -47,7 +46,7 @@ to install modules(including system call vectors management modules and two self
 to unload these modules.  Or you can use treditional way to make(clean) and insmod/rmmod these modules.
 
 
-2. For ioctl(2) support and testing, go to /test_code/ directory and run make command for executable files.
+2. For ioctl(2) support and testing, go to /test_code directory and run make command for executable files.
 
 
 3. Use test_1 for testing ioctl support(will describe it later) and vector_1.  To be specific, vector_1 is a read-write only vector, so one can only use open, read, write functions for file management.  The others, which including rmdir, mkdir, chdir, rename, create, unlink, have been forbidden.
